@@ -1,0 +1,24 @@
+{
+  "name": "products-services",
+  "version": "1.0.0",
+  "description": "RDBM and NoSQL DBMS for the product service",
+  "main": "index.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Team-Droid-SDC/products-services.git"
+  },
+  "author": "Junsu Park",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Team-Droid-SDC/products-services/issues"
+  },
+  "homepage": "https://github.com/Team-Droid-SDC/products-services#readme",
+  "dependencies": {
+    "mongoose": "^6.3.6",
+    "pg": "^8.7.3",
+    "postgres": "^3.2.4"
+  }
+}
