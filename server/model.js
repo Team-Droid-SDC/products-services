@@ -1,0 +1,69 @@
+const pool = require('./db.js');
+
+exports.products = (req, res) => {
+  const limit = req.query.count || 5;
+  const queryStr = `SELECT * FROM products limit ${limit}`;
+
+  pool.query(queryStr)
+    .then(response => res.send(response.rows))
+    .catch(err => res.send(err));
+}
+
+exports.product = (req, res) => {
+  const productQuery = `SELECT * FROM products where id = ${req.params.product_id}`;
+  const featureQuery = `SELECT feature, value FROM features where product_id = ${req.params.product_id}`;
+  pool.query(productQuery)
+    .then(product => {
+      pool.query(featureQuery)
+        .then(features => {
+          product.rows[0].features = features.rows;
+          res.json(product.rows[0]);
+        })
+    })
+    .catch(err => res.send(err));
+}
+
+exports.styles = (req, res) => {
+  const styleQuery = `SELECT * FROM styles WHERE productId = ${req.params.product_id}`;
+
+  pool.query(styleQuery)
+    .then(styles => {
+      const photoQuery = styles.rows.map(row => pool.query(`SELECT * FROM photos WHERE styleId = ${row.id}`));
+      const skuQuery = styles.rows.map(row => pool.query(`SELECT * FROM skus where styleId = ${row.id}`));
+
+      Promise.all([...photoQuery, ...skuQuery])
+        .then(results => {
+          const photoData = results.slice(0, photoQuery.length).map(result => {
+            const styleID = result.rows[0].styleid;
+            const urls = result.rows.map(({url, thumbnail_url}) => {
+              return {url, thumbnail_url};
+            })
+            return [styleID, urls];
+          });
+          const skuData = results.slice(photoQuery.length).map(result => {
+            const styleID = result.rows[0].styleid;
+            const skus = result.rows.map(({size, quantity}) => {
+              return {size, quantity};
+            })
+            return [styleID, skus];
+          })
+          styles.rows.forEach(row => {
+            row.photos = photoData.find(photos => photos[0] === row.id)[1];
+            row.skus = skuData.find(skus => skus[0] === row.id)[1];
+          })
+          res.send(styles.rows);
+        })
+    })
+    .catch(err => res.send(err));
+}
+
+exports.related = (req, res) => {
+  const queryStr = `SELECT related_product_id FROM related WHERE current_product_id = ${req.params.product_id}`;
+
+  pool.query(queryStr)
+    .then(response => {
+      const relatedData = response.rows.map(row => row.related_product_id);
+      res.send(relatedData);
+    })
+    .catch(err => res.send(err));
+}
