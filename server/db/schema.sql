@@ -145,3 +145,9 @@ COPY related FROM '/Users/junsupark/repos/products-services/related.csv' CSV hea
 COPY styles FROM '/Users/junsupark/repos/products-services/styles.csv' CSV header NULL 'null';
 COPY skus FROM '/Users/junsupark/repos/products-services/skus.csv' CSV header;
 COPY photos FROM '/Users/junsupark/repos/products-services/photos.csv' CSV header;
+
+CREATE INDEX styles_prod_id ON styles (productId);
+CREATE INDEX features_prod_id on features (product_id);
+CREATE INDEX photos_style_id on photos (styleId);
+CREATE INDEX skus_style_id on skus (styleId);
+CREATE INDEX related_prod_id on related (current_product_id);
