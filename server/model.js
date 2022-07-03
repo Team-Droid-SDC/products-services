@@ -34,6 +34,9 @@ exports.styles = (req, res) => {
       Promise.all([...photoQuery, ...skuQuery])
         .then(results => {
           const photoData = results.slice(0, photoQuery.length).map(result => {
+            if (result.rows.length === 0) {
+              return;
+            }
             const styleID = result.rows[0].styleid;
             const urls = result.rows.map(({url, thumbnail_url}) => {
               return {url, thumbnail_url};
@@ -41,6 +44,9 @@ exports.styles = (req, res) => {
             return [styleID, urls];
           });
           const skuData = results.slice(photoQuery.length).map(result => {
+            if (result.rows.length === 0) {
+              return;
+            }
             const styleID = result.rows[0].styleid;
             const skus = result.rows.map(({size, quantity}) => {
               return {size, quantity};
@@ -48,8 +54,19 @@ exports.styles = (req, res) => {
             return [styleID, skus];
           })
           styles.rows.forEach(row => {
-            row.photos = photoData.find(photos => photos[0] === row.id)[1];
-            row.skus = skuData.find(skus => skus[0] === row.id)[1];
+            for (let i = 0; i < photoData.length; i++) {
+              if (photoData[i] && photoData[i][0] === row.id) {
+                row.photos = photoData[i][1];
+                break;
+              }
+            }
+
+            for (let i = 0; i < skuData.length; i++) {
+              if (skuData[i] && skuData[i][0] === row.id) {
+                row.skus = skuData[i][1];
+                break;
+              }
+            }
           })
           res.send(styles.rows);
         })
