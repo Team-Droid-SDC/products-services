@@ -30,48 +30,51 @@ exports.styles = (req, res) => {
     .then(styles => {
       const photoQuery = styles.rows.map(row => pool.query(`SELECT * FROM photos WHERE styleId = ${row.id}`));
       const skuQuery = styles.rows.map(row => pool.query(`SELECT * FROM skus where styleId = ${row.id}`));
-
-      Promise.all([...photoQuery, ...skuQuery])
-        .then(results => {
-          const photoData = results.slice(0, photoQuery.length).map(result => {
-            if (result.rows.length === 0) {
-              return;
-            }
-            const styleID = result.rows[0].styleid;
-            const urls = result.rows.map(({url, thumbnail_url}) => {
-              return {url, thumbnail_url};
-            })
-            return [styleID, urls];
-          });
-          const skuData = results.slice(photoQuery.length).map(result => {
-            if (result.rows.length === 0) {
-              return;
-            }
-            const styleID = result.rows[0].styleid;
-            const skus = result.rows.map(({size, quantity}) => {
-              return {size, quantity};
-            })
-            return [styleID, skus];
-          })
-          styles.rows.forEach(row => {
-            for (let i = 0; i < photoData.length; i++) {
-              if (photoData[i] && photoData[i][0] === row.id) {
-                row.photos = photoData[i][1];
-                break;
+      if(photoQuery.length !== 0) {
+        Promise.all([...photoQuery, ...skuQuery])
+          .then(results => {
+            const photoData = results.slice(0, photoQuery.length).map(result => {
+              if (result.rows.length === 0) {
+                return;
               }
-            }
-
-            for (let i = 0; i < skuData.length; i++) {
-              if (skuData[i] && skuData[i][0] === row.id) {
-                row.skus = skuData[i][1];
-                break;
+              const styleID = result.rows[0].styleid;
+              const urls = result.rows.map(({url, thumbnail_url}) => {
+                return {url, thumbnail_url};
+              })
+              return [styleID, urls];
+            });
+            const skuData = results.slice(photoQuery.length).map(result => {
+              if (result.rows.length === 0) {
+                return;
               }
-            }
+              const styleID = result.rows[0].styleid;
+              const skus = result.rows.map(({size, quantity}) => {
+                return {size, quantity};
+              })
+              return [styleID, skus];
+            })
+            styles.rows.forEach(row => {
+              for (let i = 0; i < photoData.length; i++) {
+                if (photoData[i] && photoData[i][0] === row.id) {
+                  row.photos = photoData[i][1];
+                  break;
+                }
+              }
+
+              for (let i = 0; i < skuData.length; i++) {
+                if (skuData[i] && skuData[i][0] === row.id) {
+                  row.skus = skuData[i][1];
+                  break;
+                }
+              }
+            })
+            res.send(styles.rows);
           })
-          res.send(styles.rows);
-        })
+          .catch(err => res.send(err));
+      }
+      else res.send(styles.rows);
     })
-    .catch(err => res.send(err));
+
 }
 
 exports.related = (req, res) => {
